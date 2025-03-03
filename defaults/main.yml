@@ -1,0 +1,22 @@
+ba_api_url: http://192.168.0.220:5050
+ba_validate_certs: false
+
+ba_coin: BTC
+ba_interval: 15 Minute
+ba_usd: 10
+
+apikey: ""
+apisecret: ""
+
+# no changes below here
+ba_coin_action: 
+  coin: "['{{ ba_coin }}']"
+  interval: "{{ ba_interval }}"
+
+ba_coin_buy:
+  coin: "{{ ba_coin }}"
+  usd: "{{ ba_usd }}"
+
+ba_api_key:
+  apikey: "{{ apikey }}"
+  apisecret: "{{ apisecret }}"
