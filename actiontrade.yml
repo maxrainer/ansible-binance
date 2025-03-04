@@ -8,13 +8,6 @@
   
   tasks:
 
-    - debug: 
-        var: hostvars[inventory_hostname]
-
-    - name: apikey and secret to dictionary
-      ansible.builtin.set_fact:
-        ba_api_key: "{'apikey': {{ api_key }}, 'apisecret': {{ api_secret }}}"
-
     - name: "set binance URL endpoint to {{ ba_endpoint }}"
       ansible.builtin.uri:
         url: "{{ ba_api_url }}/endpoint"
@@ -30,7 +23,7 @@
         body_format: json
         validate_certs: "{{ ba_validate_certs }}"
         body: "{{ ba_api_key | to_json }}"
-      # no_log: true
+      no_log: true
 
     - name: "get prediction action for coin {{ ba_coin }}"
       ansible.builtin.uri:
