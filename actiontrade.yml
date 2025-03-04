@@ -9,7 +9,7 @@
   tasks:
 
     - debug: 
-        var: api_key
+        var: hostvars[inventory_hostname]
 
     - name: apikey and secret to dictionary
       ansible.builtin.set_fact:
