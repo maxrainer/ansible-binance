@@ -2,8 +2,8 @@
 # override these variables
 # ba_api_url: http://192.168.0.220:5050
 # ba_validate_certs: false
-# apikey: ""
-# apisecret: ""
+# api_key: ""
+# api_secret: ""
 # ba_binance_url: "https://api.binance.com/"
 
 ba_coin: BTC
@@ -20,8 +20,8 @@ ba_coin_buy:
   usd: "{{ ba_usd }}"
 
 # ba_api_key:
-#   apikey: "{{ apikey }}"
-#   apisecret: "{{ apisecret }}"
+#   apikey: "{{ api_key }}"
+#   apisecret: "{{ api_secret }}"
 
 ba_endpoint: 
   endpoint: "{{ ba_binance_url }}"
