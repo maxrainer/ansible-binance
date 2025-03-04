@@ -23,7 +23,7 @@
         body_format: json
         validate_certs: "{{ ba_validate_certs }}"
         body: "{{ ba_api_key | to_json }}"
-      #no_log: true
+      no_log: true
 
     - name: "get prediction action for coin {{ ba_coin }}"
       ansible.builtin.uri:
@@ -71,7 +71,7 @@
         verbosity: 2
       when: _action.json[ba_coin] == 'Sell'
 
-    - name: clear api key and secret
-      ansible.builtin.uri:
-        url: "{{ ba_api_url }}/clearkey"
-        method: GET
+    # - name: clear api key and secret
+    #   ansible.builtin.uri:
+    #     url: "{{ ba_api_url }}/clearkey"
+    #     method: GET
