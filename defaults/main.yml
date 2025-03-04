@@ -19,9 +19,9 @@ ba_coin_buy:
   coin: "{{ ba_coin }}"
   usd: "{{ ba_usd }}"
 
-ba_api_key:
-  apikey: "{{ apikey }}"
-  apisecret: "{{ apisecret }}"
+# ba_api_key:
+#   apikey: "{{ apikey }}"
+#   apisecret: "{{ apisecret }}"
 
 ba_endpoint: 
   endpoint: "{{ ba_binance_url }}"
