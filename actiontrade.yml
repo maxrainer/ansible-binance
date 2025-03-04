@@ -10,7 +10,7 @@
 
     - name: apikey and secret to dictionary
       ansible.builtin.set_fact:
-        ba_api_key: "{'apikey': {{ apikey }}, 'apisecret': {{ apisecret }}}"
+        ba_api_key: "{'apisecret': {{ apisecret }}}"
 
     - name: "set binance URL endpoint to {{ ba_endpoint }}"
       ansible.builtin.uri:
