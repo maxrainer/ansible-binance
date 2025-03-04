@@ -8,6 +8,9 @@
   
   tasks:
 
+    - debug: 
+        var: api_key
+
     - name: apikey and secret to dictionary
       ansible.builtin.set_fact:
         ba_api_key: "{'apikey': {{ api_key }}, 'apisecret': {{ api_secret }}}"
