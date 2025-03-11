@@ -17,7 +17,7 @@
         body: "{{ ba_endpoint | to_json }}"
     
     - name: set facts
-      set_facts:
+      ansible.builtin.set_fact:
         bd_average: "200.2"
         bd_last_sell: "122"
         bd_last_buy: "112"
