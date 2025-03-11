@@ -21,6 +21,7 @@
         bd_average: "200.2"
         bd_last_sell: "122"
         bd_last_buy: "112"
+        cacheable: true
 
     # - name: set apikey and apisecret
     #   ansible.builtin.uri:
