@@ -8,6 +8,10 @@
   
   tasks:
 
+    - debug:
+        vars: bd_average
+      when: bd_average
+
     - name: "set binance URL endpoint to {{ ba_endpoint }}"
       ansible.builtin.uri:
         url: "{{ ba_api_url }}/endpoint"
@@ -18,7 +22,7 @@
     
     - name: set facts
       ansible.builtin.set_fact:
-        bd_average: "200.2"
+        bd_average: "{{ bd_average }} + 100"
         bd_last_sell: "122"
         bd_last_buy: "112"
         cacheable: true
