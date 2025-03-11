@@ -9,7 +9,7 @@
   tasks:
 
     - debug:
-        vars: bd_average
+        var: bd_average
       when: bd_average
 
     - name: "set binance URL endpoint to {{ ba_endpoint }}"
