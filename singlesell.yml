@@ -1,7 +1,7 @@
 ---
 
 - name: buy predicted coin(s)
-  hosts: localhost
+  hosts: all
   gather_facts: false
   vars_files:
      - ./defaults/main.yml
