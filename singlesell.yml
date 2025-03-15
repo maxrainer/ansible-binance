@@ -5,12 +5,9 @@
   gather_facts: false
   vars_files:
      - ./defaults/main.yml
+     - ./defaults/developer.yml
   
   tasks:
-
-    - debug:
-        var: bd_average
-      when: bd_average
 
     - name: "set binance URL endpoint to {{ ba_endpoint }}"
       ansible.builtin.uri:
@@ -22,49 +19,62 @@
     
     - name: set facts
       ansible.builtin.set_fact:
-        bd_average: "{{ bd_average }} + 100"
         bd_last_sell: "122"
         bd_last_buy: "112"
-        cacheable: true
+        cached_total_qty: "{{ total_qty | float }}"
 
-    # - name: set apikey and apisecret
-    #   ansible.builtin.uri:
-    #     url: "{{ ba_api_url }}/apikey"
-    #     method: POST
-    #     body_format: json
-    #     validate_certs: "{{ ba_validate_certs }}"
-    #     body: "{{ ba_api_key | to_json }}"
-    #   no_log: true
+    - name: set apikey and apisecret
+      ansible.builtin.uri:
+        url: "{{ ba_api_url }}/apikey"
+        method: POST
+        body_format: json
+        validate_certs: "{{ ba_validate_certs }}"
+        body: "{{ ba_api_key | to_json }}"
+      no_log: true
 
-    # - name: "get prediction action for coin {{ ba_coin }}"
-    #   ansible.builtin.uri:
-    #     url: "{{ ba_api_url }}/coin_action"
-    #     method: POST
-    #     validate_certs: "{{ ba_validate_certs }}"
-    #     body_format: json
-    #     body: "{{ ba_coin_action | to_json }}"
-    #     return_content: true
-    #   register: _action
+    - name: "get prediction action for coin {{ ba_coin }}"
+      ansible.builtin.uri:
+        url: "{{ ba_api_url }}/coin_action"
+        method: POST
+        validate_certs: "{{ ba_validate_certs }}"
+        body_format: json
+        body: "{{ ba_coin_action | to_json }}"
+        return_content: true
+      register: _action
     
-    # - debug: 
-    #     var: _action
-    #     verbosity: 2
+    - debug: 
+        var: _action
+        verbosity: 2
   
-    # - name: "order if prediction is buy"
-    #   ansible.builtin.uri:
-    #     url: "{{ ba_api_url }}/buy"
-    #     body: "{{ ba_coin_buy | to_json }}"
-    #     method: POST
-    #     validate_certs: "{{ ba_validate_certs }}"
-    #     body_format: json
-    #     return_content: true
-    #   register: _buy
-    #   when: _action.json[ba_coin] == 'Buy'
+    - name: "order if prediction is buy"
+      ansible.builtin.uri:
+        url: "{{ ba_api_url }}/buy"
+        body: "{{ ba_coin_buy | to_json }}"
+        method: POST
+        validate_certs: "{{ ba_validate_certs }}"
+        body_format: json
+        return_content: true
+      register: _buy
+      # when: _action.json[ba_coin] == 'Buy'
   
-    # - debug: 
-    #     var: _buy
-    #     verbosity: 2
-    #   when: _action.json[ba_coin] == 'Buy'
+    - debug: 
+        var: _buy
+        verbosity: 2
+      # when: _action.json[ba_coin] == 'Buy'
+    
+    - name: prepare cacheable variables
+      ansible.builtin.set_fact:
+        last_buy_date: "{{ _buy['date'] }}"
+        last_price_buy: "{{ _buy['json']['fills'][0]['price'] | float }}"
+        last_qty_buy:  "{{ _buy['json']['fills'][0]['qty'] | float }}"
+        total_qty: "{{ total_qty | float + _buy['json']['fills'][0]['qty'] | float }}"
+        cacheable: true
+    
+    - name: compute average
+      ansible.builtin.set_fact:
+        average: "{{ ( cached_total_qty | float * average | float + last_qty_buy | float * last_price_buy | float) / total_qty | float }}"
+        cacheable: true
+    
 
     # - name: "order if prediction is sell"
     #   ansible.builtin.uri:

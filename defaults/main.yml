@@ -2,9 +2,10 @@
 # override these variables
 # ba_api_url: http://192.168.0.220:5050
 # ba_validate_certs: false
-# api_key: ""
-# api_secret: ""
+
 # ba_binance_url: "https://api.binance.com/"
+api_key: ""
+api_secret: ""
 
 ba_coin: BTC
 ba_interval: 15 Minute
