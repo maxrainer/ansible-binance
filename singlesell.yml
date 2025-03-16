@@ -17,12 +17,6 @@
         validate_certs: "{{ ba_validate_certs }}"
         body: "{{ ba_endpoint | to_json }}"
     
-    - name: set facts
-      ansible.builtin.set_fact:
-        bd_last_sell: "122"
-        bd_last_buy: "112"
-        cached_total_qty: "{{ total_qty | float }}"
-
     - name: set apikey and apisecret
       ansible.builtin.uri:
         url: "{{ ba_api_url }}/apikey"
@@ -41,56 +35,108 @@
         body: "{{ ba_coin_action | to_json }}"
         return_content: true
       register: _action
-    
-    - debug: 
-        var: _action
-        verbosity: 2
-  
-    - name: "order if prediction is buy"
-      ansible.builtin.uri:
-        url: "{{ ba_api_url }}/buy"
-        body: "{{ ba_coin_buy | to_json }}"
-        method: POST
-        validate_certs: "{{ ba_validate_certs }}"
-        body_format: json
-        return_content: true
-      register: _buy
-      # when: _action.json[ba_coin] == 'Buy'
-  
-    - debug: 
-        var: _buy
-        verbosity: 2
-      # when: _action.json[ba_coin] == 'Buy'
-    
-    - name: prepare cacheable variables
-      ansible.builtin.set_fact:
-        last_buy_date: "{{ _buy['date'] }}"
-        last_price_buy: "{{ _buy['json']['fills'][0]['price'] | float }}"
-        last_qty_buy:  "{{ _buy['json']['fills'][0]['qty'] | float }}"
-        total_qty: "{{ total_qty | float + _buy['json']['fills'][0]['qty'] | float }}"
-        cacheable: true
-    
-    - name: compute average
-      ansible.builtin.set_fact:
-        average: "{{ ( cached_total_qty | float * average | float + last_qty_buy | float * last_price_buy | float) / total_qty | float }}"
-        cacheable: true
-    
 
-    # - name: "order if prediction is sell"
-    #   ansible.builtin.uri:
-    #     url: "{{ ba_api_url }}/sell"
-    #     body: "{{ ba_coin_buy | to_json }}"
-    #     method: POST
-    #     validate_certs: "{{ ba_validate_certs }}"
-    #     body_format: json
-    #     return_content: true
-    #   register: _sell
-    #   when: _action.json[ba_coin] == 'Sell'
+    - name: cache total qty
+      ansible.builtin.set_fact:
+        cached_total_qty: "{{ total_qty | float }}"
+        cached_average: "{{ average | float }}"
 
-    # - debug: 
-    #     var: _sell
-    #     verbosity: 2
-    #   when: _action.json[ba_coin] == 'Sell'
+    - name: BUY block
+      when: _action.json[ba_coin] == 'Buy' or dev_buy
+      block:
+      - name: "order if prediction is buy"
+        ansible.builtin.uri:
+          url: "{{ ba_api_url }}/buy"
+          body: "{{ ba_coin_buy | to_json }}"
+          method: POST
+          validate_certs: "{{ ba_validate_certs }}"
+          body_format: json
+          return_content: true
+        register: _buy
+      
+      - name: prepare cacheable variables when buy
+        ansible.builtin.set_fact:
+          last_buy_date: "{{ _buy['date'] }}"
+          last_price_buy: "{{ _buy['json']['cummulativeQuoteQty'] | float / _buy['json']['executedQty'] | float }}"
+          last_qty_buy:  "{{ _buy['json']['executedQty'] | float }}"
+          total_qty: "{{ total_qty | float + _buy['json']['executedQty'] | float }}"
+          cacheable: true
+      
+      - name: compute average when buy
+        ansible.builtin.set_fact:
+          average: "{{ ( cached_total_qty | float * average | float + last_qty_buy | float * last_price_buy | float) / total_qty | float }}"
+          cacheable: true
+
+    - name: SELL block
+      when: _action.json[ba_coin] == 'Sell' or dev_sell
+      block:
+      - name: "get current price"
+        ansible.builtin.uri:
+          url: "{{ ba_api_url }}/price"
+          body: "{{ ba_coin_buy | to_json }}"
+          method: POST
+          validate_certs: "{{ ba_validate_certs }}"
+          body_format: json
+          return_content: true
+        register: _current_price
+
+      - name: calculate sell all option
+        ansible.builtin.set_fact:
+          sell_all: true
+        when:  (_current_price.json | float / average | float) * 100 - 100 >= high_sell_limit
+
+      - name: "sell all if prediction is sell and high_sell_limit reached"
+        ansible.builtin.uri:
+          url: "{{ ba_api_url }}/sellall"
+          body: "{{ ba_coin_buy | to_json }}"
+          method: POST
+          validate_certs: "{{ ba_validate_certs }}"
+          body_format: json
+          return_content: true
+        register: _sell
+        when: sell_all 
+
+      - name: set cacheable variables for sell all
+        set_fact:
+#          average: 0.0
+          total_qty: "{{ cached_total_qty | float - _sell['json']['executedQty'] | float }}"
+          last_sell_date: "{{ _sell['date'] }}"
+          last_sell_price: "{{ _sell['json']['cummulativeQuoteQty'] | float / _sell['json']['executedQty'] | float }}"
+          last_sell_qty: "{{ _sell['json']['executedQty'] }}"
+          total_profit: "{{ total_profit | float + ( _sell['json']['cummulativeQuoteQty'] | float - cached_average | float * _sell['json']['executedQty'] | float) }}"
+          cacheable: true
+        when: sell_all 
+    
+      - name: calculate sell part option
+        ansible.builtin.set_fact:
+          sell_part: true
+        when:  (_current_price.json | float / average | float) * 100 - 100 >= low_sell_limit 
+          and not sell_all
+    
+      - name: "order part if prediction is sell"
+        ansible.builtin.uri:
+          url: "{{ ba_api_url }}/sell"
+          body: "{{ ba_coin_buy | to_json }}"
+          method: POST
+          validate_certs: "{{ ba_validate_certs }}"
+          body_format: json
+          return_content: true
+        register: _sell
+        when: sell_part
+      
+      - name: set cacheable variables for sell part
+        set_fact:
+#          average: 0.0
+          total_qty: "{{ cached_total_qty | float - _sell['json']['executedQty'] | float }}"
+          last_sell_date: "{{ _sell['date'] }}"
+          last_sell_price: "{{ _sell['json']['cummulativeQuoteQty'] | float / _sell['json']['executedQty'] | float }}"
+          last_sell_qty: "{{ _sell['json']['executedQty'] }}"
+          total_profit: "{{ total_profit | float + ( _sell['json']['cummulativeQuoteQty'] | float - cached_average | float * _sell['json']['executedQty'] | float) }}"
+          cacheable: true
+        when: sell_part
+
+      - debug: 
+          var: _sell
 
     # - name: clear api key and secret
     #   ansible.builtin.uri:

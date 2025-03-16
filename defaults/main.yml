@@ -7,9 +7,9 @@
 api_key: ""
 api_secret: ""
 
-ba_coin: BTC
-ba_interval: 15 Minute
-ba_usd: 10
+# ba_coin: BTC
+# ba_interval: 15 Minute
+# ba_usd: 10
 
 # no changes below here
 ba_coin_action: 
@@ -26,3 +26,8 @@ ba_coin_buy:
 
 ba_endpoint: 
   endpoint: "{{ ba_binance_url }}"
+
+dev_sell: false
+dev_buy: false
+sell_part: false
+sell_all: false
