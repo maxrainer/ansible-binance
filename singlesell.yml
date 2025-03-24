@@ -42,6 +42,7 @@
         cached_average: "{{ average | float }}"
 
     - name: BUY block
+      tags: [buy]
       when: _action.json[ba_coin] == 'Buy' or dev_buy
       block:
       - name: "order if prediction is buy"
@@ -68,6 +69,7 @@
           cacheable: true
 
     - name: SELL block
+      tags: [sell]
       when: _action.json[ba_coin] == 'Sell' or dev_sell
       block:
       - name: "get current price"
@@ -98,7 +100,6 @@
 
       - name: set cacheable variables for sell all
         set_fact:
-#          average: 0.0
           total_qty: "{{ cached_total_qty | float - _sell['json']['executedQty'] | float }}"
           last_sell_date: "{{ _sell['date'] }}"
           last_sell_price: "{{ _sell['json']['cummulativeQuoteQty'] | float / _sell['json']['executedQty'] | float }}"
@@ -126,7 +127,6 @@
       
       - name: set cacheable variables for sell part
         set_fact:
-#          average: 0.0
           total_qty: "{{ cached_total_qty | float - _sell['json']['executedQty'] | float }}"
           last_sell_date: "{{ _sell['date'] }}"
           last_sell_price: "{{ _sell['json']['cummulativeQuoteQty'] | float / _sell['json']['executedQty'] | float }}"
