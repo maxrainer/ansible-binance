@@ -1,0 +1,13 @@
+---
+- name: set cachable facts
+  hosts: all
+  gather_facts: false
+  vars:
+    - average: 0.0
+  
+  tasks:
+    
+    - name: cache average
+      ansible.builtin.set_fact:
+        average: "{{ average | float }}"
+        cachable: true
