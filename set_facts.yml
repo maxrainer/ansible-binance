@@ -7,6 +7,6 @@
     
     - name: cache average and total_qty
       ansible.builtin.set_fact:
-        average: "{{ input_average | float }}"
-        total_qty: "{{ input_total_qty | float }}"
+        average: "{{ average | float }}"
+        total_qty: "{{ total_qty | float }}"
         cacheable: true
