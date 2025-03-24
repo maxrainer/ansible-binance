@@ -6,7 +6,8 @@
   vars_files:
      - ./defaults/main.yml
      - ./defaults/developer.yml
-  
+  vars:
+    accelerator: false
   tasks:
 
     - name: "set binance URL endpoint to {{ ba_endpoint }}"
@@ -35,16 +36,40 @@
         body: "{{ ba_coin_action | to_json }}"
         return_content: true
       register: _action
+    
+    - name: "end play if prediction is 'hold'"
+      ansible.builtin.meta: end_play
+      when: _action.json[ba_coin] == 'Hold' and not dev_sell and not dev_buy
 
     - name: cache total qty
       ansible.builtin.set_fact:
         cached_total_qty: "{{ total_qty | float }}"
         cached_average: "{{ average | float }}"
+    
+    - name: "get current price"
+      ansible.builtin.uri:
+        url: "{{ ba_api_url }}/price"
+        body: "{{ ba_coin_buy | to_json }}"
+        method: POST
+        validate_certs: "{{ ba_validate_certs }}"
+        body_format: json
+        return_content: true
+      register: _current_price
 
     - name: BUY block
       tags: [buy]
       when: _action.json[ba_coin] == 'Buy' or dev_buy
       block:
+
+      - name: end play if buy price currently to high
+        ansible.builtin.meta: end_play
+        when: (_current_price.json | float / average | float) * 100 - 100 >= high_buy_limit 
+
+      - name: "calculate buy accelerator"
+        ansible.builtin.set_fact:
+          ba_usd: "{{ ba_usd * buy_multiplicator }}"
+        when: (average | float / _current_price.json | float) * 100 - 100 >= low_accelerate_buy_limit
+          
       - name: "order if prediction is buy"
         ansible.builtin.uri:
           url: "{{ ba_api_url }}/buy"
@@ -72,15 +97,6 @@
       tags: [sell]
       when: _action.json[ba_coin] == 'Sell' or dev_sell
       block:
-      - name: "get current price"
-        ansible.builtin.uri:
-          url: "{{ ba_api_url }}/price"
-          body: "{{ ba_coin_buy | to_json }}"
-          method: POST
-          validate_certs: "{{ ba_validate_certs }}"
-          body_format: json
-          return_content: true
-        register: _current_price
 
       - name: calculate sell all option
         ansible.builtin.set_fact:
