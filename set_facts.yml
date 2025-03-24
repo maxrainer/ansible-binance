@@ -9,4 +9,4 @@
       ansible.builtin.set_fact:
         average: "{{ input_average | float }}"
         total_qty: "{{ input_total_qty | float }}"
-        cachable: true
+        cacheable: true
