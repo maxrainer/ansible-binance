@@ -63,12 +63,13 @@
 
       - name: end play if buy price currently to high
         ansible.builtin.meta: end_play
-        when: (_current_price.json | float / average | float) * 100 - 100 >= high_buy_limit 
+        when: average != 0 and (_current_price.json | float / average | float) * 100 - 100 >= high_buy_limit 
 
       - name: "calculate buy accelerator"
         ansible.builtin.set_fact:
           ba_usd: "{{ ba_usd * buy_multiplicator }}"
-        when: (average | float / _current_price.json | float) * 100 - 100 >= low_accelerate_buy_limit
+        when: average != 0 and _current_price.json != 0 and 
+          (average | float / _current_price.json | float) * 100 - 100 >= low_accelerate_buy_limit
           
       - name: "order if prediction is buy"
         ansible.builtin.uri:
@@ -101,9 +102,10 @@
       - name: calculate sell all option
         ansible.builtin.set_fact:
           sell_all: true
-        when:  (_current_price.json | float / average | float) * 100 - 100 >= high_sell_limit
+        when:  average != 0 and 
+          (_current_price.json | float / average | float) * 100 - 100 >= high_sell_limit
 
-      - name: "sell all if prediction is sell and high_sell_limit reached"
+      - name: sell all if prediction is sell and high_sell_limit reached
         ansible.builtin.uri:
           url: "{{ ba_api_url }}/sellall"
           body: "{{ ba_coin_buy | to_json }}"
@@ -116,6 +118,7 @@
 
       - name: set cacheable variables for sell all
         set_fact:
+          average: 0
           total_qty: "{{ cached_total_qty | float - _sell['json']['executedQty'] | float }}"
           last_sell_date: "{{ _sell['date'] }}"
           last_sell_price: "{{ _sell['json']['cummulativeQuoteQty'] | float / _sell['json']['executedQty'] | float }}"
@@ -127,8 +130,8 @@
       - name: calculate sell part option
         ansible.builtin.set_fact:
           sell_part: true
-        when:  (_current_price.json | float / average | float) * 100 - 100 >= low_sell_limit 
-          and not sell_all
+        when:  average != 0 and not sell_all and
+          (_current_price.json | float / average | float) * 100 - 100 >= low_sell_limit 
     
       - name: "order part if prediction is sell"
         ansible.builtin.uri:
@@ -141,6 +144,8 @@
         register: _sell
         when: sell_part
       
+# average untouched because otherwise 
+# total_profit calculation is wrong 
       - name: set cacheable variables for sell part
         set_fact:
           total_qty: "{{ cached_total_qty | float - _sell['json']['executedQty'] | float }}"
@@ -150,6 +155,11 @@
           total_profit: "{{ total_profit | float + ( _sell['json']['cummulativeQuoteQty'] | float - cached_average | float * _sell['json']['executedQty'] | float) }}"
           cacheable: true
         when: sell_part
+      
+      - name: reset average when total_qty is too low to sell
+        ansible.builtin.set_fact:
+          average: 0
+        when: total_qty | float * _current_price.json | float < min_buy_usd
 
     # - name: clear api key and secret
     #   ansible.builtin.uri:
