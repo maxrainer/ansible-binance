@@ -63,12 +63,13 @@
 
       - name: end play if buy price currently to high
         ansible.builtin.meta: end_play
-        when: average != 0 and (_current_price.json | float / average | float) * 100 - 100 >= high_buy_limit 
+        when: average | float != 0 and 
+          (_current_price.json | float / average | float) * 100 - 100 >= high_buy_limit 
 
       - name: "calculate buy accelerator"
         ansible.builtin.set_fact:
           ba_usd: "{{ ba_usd * buy_multiplicator }}"
-        when: average != 0 and _current_price.json != 0 and 
+        when: average | float != 0 and _current_price.json | float != 0 and 
           (average | float / _current_price.json | float) * 100 - 100 >= low_accelerate_buy_limit
           
       - name: "order if prediction is buy"
@@ -102,7 +103,7 @@
       - name: calculate sell all option
         ansible.builtin.set_fact:
           sell_all: true
-        when:  average != 0 and 
+        when:  average | float != 0 and 
           (_current_price.json | float / average | float) * 100 - 100 >= high_sell_limit
 
       - name: sell all if prediction is sell and high_sell_limit reached
@@ -130,7 +131,7 @@
       - name: calculate sell part option
         ansible.builtin.set_fact:
           sell_part: true
-        when:  average != 0 and not sell_all and
+        when:  average | float != 0 and not sell_all and
           (_current_price.json | float / average | float) * 100 - 100 >= low_sell_limit 
     
       - name: "order part if prediction is sell"
@@ -160,8 +161,3 @@
         ansible.builtin.set_fact:
           average: 0
         when: total_qty | float * _current_price.json | float < min_buy_usd
-
-    # - name: clear api key and secret
-    #   ansible.builtin.uri:
-    #     url: "{{ ba_api_url }}/clearkey"
-    #     method: GET
