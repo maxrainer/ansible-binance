@@ -85,8 +85,8 @@
       
       - name: "end play if 'insufficient balance'"
         ansible.builtin.meta: end_play
-        when: _action.json['msg'] is defined and 
-          _action.json['msg'] is ansible.builtin.search("insufficient balance")
+        when: _action.json['msg'] is defined 
+          and _action.json['msg'] | string is ansible.builtin.search("insufficient balance")
       
       - name: prepare cacheable variables when buy
         ansible.builtin.set_fact:
