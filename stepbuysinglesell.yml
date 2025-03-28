@@ -82,6 +82,11 @@
           return_content: true
         register: _buy
       
+      - name: "end play if 'insufficient balance'"
+        ansible.builtin.meta: end_play
+        when: _action.json['msg'] is defined and 
+          _action.json['msg'] | ansible.builtin.regex_search("insufficient balance")
+      
       - name: prepare cacheable variables when buy
         ansible.builtin.set_fact:
           last_buy_date: "{{ _buy['date'] }}"
@@ -145,8 +150,8 @@
         register: _sell
         when: sell_part
       
-# average untouched because otherwise 
-# total_profit calculation is wrong 
+      # average untouched because otherwise 
+      # total_profit calculation is wrong 
       - name: set cacheable variables for sell part
         set_fact:
           total_qty: "{{ cached_total_qty | float - _sell['json']['executedQty'] | float }}"
