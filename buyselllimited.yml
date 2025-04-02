@@ -9,24 +9,8 @@
   vars:
     accelerator: false
     average_zero: false
+    ba_trade_dict: "{{ ba_coin_buy | ansible.builtin.combine(ba_api_key) }}"
   tasks:
-
-    - name: "set binance URL endpoint to {{ ba_endpoint }}"
-      ansible.builtin.uri:
-        url: "{{ ba_api_url }}/endpoint"
-        method: POST
-        body_format: json
-        validate_certs: "{{ ba_validate_certs }}"
-        body: "{{ ba_endpoint | to_json }}"
-    
-    - name: set apikey and apisecret
-      ansible.builtin.uri:
-        url: "{{ ba_api_url }}/apikey"
-        method: POST
-        body_format: json
-        validate_certs: "{{ ba_validate_certs }}"
-        body: "{{ ba_api_key | to_json }}"
-      no_log: true
 
     - name: "get prediction action for coin {{ ba_coin }}"
       ansible.builtin.uri:
@@ -66,7 +50,7 @@
         ansible.builtin.meta: end_play
         when: (average | float != 0 and 
           (_current_price.json | float / average | float) * 100 - 100 >= high_buy_limit)
-          or (best_buy_price.json | float != 0 and 
+          or (best_buy_price | float != 0 and 
           (_current_price.json | float / best_buy_price | float) * 100 - 100 >= best_buy_price_max_diff) 
           or (max_buy_usd | float != 0 and 
           (_current_price.json | float * total_qty | float) >= max_buy_usd | float )
@@ -86,6 +70,12 @@
           body_format: json
           return_content: true
         register: _buy
+        no_log: true
+      
+      - name: debug buy order
+        ansible.builtin.debug:
+          var: _buy
+          verbosity: 2
               
       - name: "end play if 'insufficient balance'"
         ansible.builtin.meta: end_play
@@ -140,6 +130,13 @@
           return_content: true
         register: _sell
         when: sell_all 
+        no_log: true
+      
+      - name: debug sell all order
+        ansible.builtin.debug:
+          var: _sell
+          verbosity: 2
+        when: sell_all 
 
       - name: set cacheable variables for sell all
         set_fact:
@@ -159,7 +156,7 @@
         when:  average | float != 0 and not sell_all and
           (_current_price.json | float / average | float) * 100 - 100 >= low_sell_limit 
     
-      - name: "order part if prediction is sell"
+      - name: order part if prediction is sell
         ansible.builtin.uri:
           url: "{{ ba_api_url }}/sell"
           body: "{{ ba_coin_buy | to_json }}"
@@ -168,6 +165,13 @@
           body_format: json
           return_content: true
         register: _sell
+        when: sell_part
+        no_log: true
+      
+      - name: debug sell part order
+        ansible.builtin.debug:
+          var: _sell
+          verbosity: 2
         when: sell_part
       
       # average untouched because otherwise 

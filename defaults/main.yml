@@ -21,6 +21,7 @@ ba_coin_action:
 ba_coin_buy:
   coin: "{{ ba_coin }}"
   usd: "{{ ba_usd }}"
+  url: "{{ ba_binance_url }}"
 
 # ba_api_key:
 #   apikey: "{{ api_key }}"

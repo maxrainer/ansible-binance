@@ -1,0 +1,16 @@
+---
+
+- name: buy predicted coin(s)
+  hosts: all
+  gather_facts: false
+  vars_files:
+     - ../defaults/main.yml
+     - ../defaults/developer.yml
+  vars:
+    accelerator: false
+    average_zero: false
+    ba_trade_dict: "{{ ba_coin_buy | ansible.builtin.combine(ba_api_key) }}"
+  tasks:
+  
+  - ansible.builtin.debug:
+      var: ba_trade_dict
