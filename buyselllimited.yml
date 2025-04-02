@@ -62,10 +62,12 @@
       when: _action.json[ba_coin] == 'Buy' or dev_buy
       block:
 
-      - name: end play if buy price currently to high or max buy limit reached
+      - name: end play if current price to high or max buy limit reached
         ansible.builtin.meta: end_play
         when: (average | float != 0 and 
           (_current_price.json | float / average | float) * 100 - 100 >= high_buy_limit)
+          or (best_buy_price.json | float != 0 and 
+          (_current_price.json | float / best_buy_price | float) * 100 - 100 >= best_buy_price_max_diff) 
           or (max_buy_usd | float != 0 and 
           (_current_price.json | float * total_qty | float) >= max_buy_usd | float )
 
