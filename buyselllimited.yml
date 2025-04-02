@@ -64,7 +64,7 @@
       - name: order if prediction is buy
         ansible.builtin.uri:
           url: "{{ ba_api_url }}/buy"
-          body: "{{ ba_coin_buy | to_json }}"
+          body: "{{ ba_trade_dict | to_json }}"
           method: POST
           validate_certs: "{{ ba_validate_certs }}"
           body_format: json
@@ -123,7 +123,7 @@
       - name: sell all if prediction is sell and high_sell_limit reached
         ansible.builtin.uri:
           url: "{{ ba_api_url }}/sellall"
-          body: "{{ ba_coin_buy | to_json }}"
+          body: "{{ ba_trade_dict | to_json }}"
           method: POST
           validate_certs: "{{ ba_validate_certs }}"
           body_format: json
@@ -159,7 +159,7 @@
       - name: order part if prediction is sell
         ansible.builtin.uri:
           url: "{{ ba_api_url }}/sell"
-          body: "{{ ba_coin_buy | to_json }}"
+          body: "{{ ba_trade_dict | to_json }}"
           method: POST
           validate_certs: "{{ ba_validate_certs }}"
           body_format: json
