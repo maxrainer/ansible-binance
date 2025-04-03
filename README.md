@@ -55,5 +55,6 @@ buy_multiplicator: 2
 high_buy_limit: 0.3
 ```
 
-![Sell variables](https://github.com/maxrainer/ansible-binance/blob/main/images/Automation-Ideads-16.jpg)
-![Buy variables](https://github.com/maxrainer/ansible-binance/blob/main/images/Automation-Ideads-17.jpg)
+![Sell variables](https://github.com/maxrainer/ansible-binance/blob/main/images/Automation-Ideas-16.jpg)
+
+![Buy variables](https://github.com/maxrainer/ansible-binance/blob/main/images/Automation-Ideas-17.jpg)
