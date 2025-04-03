@@ -72,10 +72,9 @@
         register: _buy
         no_log: true
       
-      - name: debug buy order
+      - name: buy order result
         ansible.builtin.debug:
           var: _buy
-          verbosity: 2
               
       - name: "end play if 'insufficient balance'"
         ansible.builtin.meta: end_play
@@ -132,10 +131,9 @@
         when: sell_all 
         no_log: true
       
-      - name: debug sell all order
+      - name: sell all order result
         ansible.builtin.debug:
           var: _sell
-          verbosity: 2
         when: sell_all 
 
       - name: set cacheable variables for sell all
@@ -168,10 +166,9 @@
         when: sell_part
         no_log: true
       
-      - name: debug sell part order
+      - name: sell part order result
         ansible.builtin.debug:
           var: _sell
-          verbosity: 2
         when: sell_part
       
       # average untouched because otherwise 
