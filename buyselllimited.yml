@@ -135,6 +135,11 @@
         ansible.builtin.debug:
           var: _sell
         when: sell_all 
+      
+      - name: end play if sell all and content is empty
+        ansible.builtin.meta: end_play
+        when: sell_all
+          and _sell['content'] is defined and _sell['content'] == 'empty'
 
       - name: set cacheable variables for sell all
         set_fact:
@@ -146,8 +151,8 @@
           total_profit: "{{ total_profit | float + ( _sell['json']['cummulativeQuoteQty'] | float - cached_average | float * _sell['json']['executedQty'] | float) }}"
           best_buy_price: 0.0
           cacheable: true
-        when: sell_all and _sell['content'] != 'empty'
-    
+        when: sell_all
+        
       - name: calculate sell part option
         ansible.builtin.set_fact:
           sell_part: true
@@ -170,6 +175,12 @@
         ansible.builtin.debug:
           var: _sell
         when: sell_part
+
+      - name: "end play if 'insufficient balance'"
+        ansible.builtin.meta: end_play
+        when: sell_part
+          and _sell.json['msg'] is defined 
+          and _sell.json['msg'] | string is ansible.builtin.search("insufficient balance")
       
       # average untouched because otherwise 
       # total_profit calculation is wrong 
@@ -183,8 +194,10 @@
           best_buy_price: 0.0
           cacheable: true
         when: sell_part
-      
+
+      # reset average and best_buy_price
       - name: reset average when total_qty is too low to sell
         ansible.builtin.set_fact:
           average: 0
+          best_buy_price: 0
         when: total_qty | float * _current_price.json | float < min_buy_usd
