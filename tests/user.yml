@@ -1,0 +1,11 @@
+- name: buy predicted coin(s)
+  hosts: all
+  gather_facts: false
+  vars_files:
+     - ../defaults/main.yml
+     - ../defaults/developer.yml
+
+  tasks:
+  
+  - ansible.builtin.debug:
+      var: ansible_user_id
