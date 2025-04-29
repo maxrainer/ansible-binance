@@ -159,9 +159,10 @@
       - name: calculate sell part option
         ansible.builtin.set_fact:
           sell_part: true
+          ba_usd: "{{ ba_usd | float * sell_multiplicator | float }}"
         when:  average | float != 0 and not sell_all and
           (_current_price.json | float / average | float) * 100 - 100 >= low_sell_limit 
-    
+
       - name: order part if prediction is sell
         ansible.builtin.uri:
           url: "{{ ba_api_url }}/sell"
