@@ -8,6 +8,7 @@ api_key: ""
 api_secret: ""
 
 min_buy_usd: 10
+buy_buffered_usd: 0
 
 # ba_coin: BTC
 # ba_interval: 15 Minute

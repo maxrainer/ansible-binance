@@ -46,7 +46,7 @@
       when: _action.json[ba_coin] == 'Buy' or dev_buy
       block:
 
-      - name: end play if current price to high or max buy limit reached
+      - name: end play if current price to high, max buy limit or buffer reached
         ansible.builtin.meta: end_play
         when: (average | float != 0 and 
           (_current_price.json | float / average | float) * 100 - 100 >= high_buy_limit)
@@ -54,6 +54,9 @@
           (_current_price.json | float / best_buy_price | float) * 100 - 100 >= best_buy_price_max_diff) 
           or (max_buy_usd | float != 0 and 
           (_current_price.json | float * total_qty | float) >= max_buy_usd | float )
+          or (average | float != 0 and buy_buffered_usd != 0 and 
+          (_current_price.json | float * total_qty | float) >= buy_buffered_usd | float  and
+          (average | float / _current_price.json | float) * 100 - 100 <= buy_buffered_gap | float)
 
       - name: calculate buy accelerator
         ansible.builtin.set_fact:
