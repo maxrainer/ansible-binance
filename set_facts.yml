@@ -8,5 +8,6 @@
     - name: cache average and total_qty
       ansible.builtin.set_fact:
         average: "{{ average | float }}"
+        best_buy_price: "{{ best_buy_price | float }}"
         total_qty: "{{ total_qty | float }}"
         cacheable: true
