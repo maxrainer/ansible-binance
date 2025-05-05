@@ -8,7 +8,6 @@
      - ./defaults/developer.yml
   vars:
     accelerator: false
-    average_zero: false
     ba_trade_dict: "{{ ba_coin_buy | ansible.builtin.combine(ba_api_key) }}"
   tasks:
 
@@ -91,19 +90,18 @@
           last_qty_buy:  "{{ _buy['json']['executedQty'] | float }}"
           total_qty: "{{ total_qty | float + _buy['json']['executedQty'] | float }}"
           cacheable: true
+
+      - name: compute new average when buy and average is not zero
+        ansible.builtin.set_fact:
+          average: "{{ ( cached_total_qty | float * average | float + last_qty_buy | float * last_price_buy | float) / total_qty | float }}"
+          cacheable: true
+        when: average | float != 0
       
       - name: compute new average when buy and average is zero
         ansible.builtin.set_fact:
           average: "{{ last_price_buy | float }}"
-          average_zero: true
           cacheable: true
         when: average | float == 0
-
-      - name: compute new average when buy
-        ansible.builtin.set_fact:
-          average: "{{ ( cached_total_qty | float * average | float + last_qty_buy | float * last_price_buy | float) / total_qty | float }}"
-          cacheable: true
-        when: not average_zero
       
       - name: compute best buy price
         ansible.builtin.set_fact:
