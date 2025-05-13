@@ -1,0 +1,45 @@
+---
+#
+# https://www.binance.com/en/support/announcement/list/48
+# https://www.binance.com/bapi/composite/v1/public/cms/article/catalog/list/query?catalogId=48&pageNo=1&pageSize=1"
+# https://www.binance.com/bapi/composite/v1/public/market/notice/get?page=1&rows=20
+#
+
+- name: handle crypto by announcement on binance
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ./defaults/main.yml
+    - ./defaults/developer.yml
+  vars:
+    - bapi_url: "https://www.binance.com/bapi/composite/v1/public/market/notice/get?page=1&rows=20"
+    - highest_id: 0
+    - ba_trade_dict: "{{ ba_coin_buy | ansible.builtin.combine(ba_api_key) }}"
+    - search_string: '^Binance Will Add .*, Buy Crypto,.*$'
+  tasks:
+
+    - name: get announcement from binance bapi
+      ansible.builtin.uri:
+        url: "{{ bapi_url }}"
+        method: GET
+        validate_certs: "{{ ba_validate_certs }}"
+        return_content: true
+      register: _announcement
+
+    - name: loop block for announcement items
+      when: entry.id | int > last_article_id | int
+        and entry.title is match("{{ search_string }}")
+      loop_control:
+        label: "{{ entry.id }}"
+        loop_var: entry
+      loop: "{{ _announcement.json.data }}"
+      include_tasks: ./tasks/announcement_loop.yml
+    
+    - name: fact cache for last_article_id
+      ansible.builtin.set_fact:
+        last_article_id: highest_id
+        cacheable: true
+
+    - name: print last_article_id
+      ansible.builtin.debug:
+        var: last_article_id

@@ -1,0 +1,27 @@
+---
+# loop var: entry
+
+- name: debug in loop
+  ansible.builtin.debug: 
+    var: entry
+
+- name: send WhatsApp Message for new Symbols
+  ansible.builtin.command: >
+    curl "https://api.twilio.com/2010-04-01/Accounts/{{ twilio_account_id }}/Messages.json" -X POST \
+    --data-urlencode "To={{ whats_app_receipt }}" \
+    --data-urlencode 'From=whatsapp:+14155238886' \
+    --data-urlencode "Body={{ "%c" | strftime(entry.time / 1000) }}: {{ entry.title }}, https://www.binance.com/en/support/announcement/list/48"
+    -u "{{ twilio_account_id }}:{{ twilio_account_token }}"
+
+- name: get symbols
+  ansible.builtin.set_fact:
+    symbols: "{{ entry.title | regex_findall('\\(.*?\\)') | regex_replace('\\((.*?)\\)','\\1') }}"  
+
+- name: debug in loop
+  ansible.builtin.debug: 
+    var: symbols
+    verbosity: 2
+
+- ansible.builtin.set_fact: 
+    highest_id: "{{ entry.id }}"
+  when: entry.id | int > highest_id | int
